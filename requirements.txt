@@ -1,0 +1,9 @@
+discord.py
+discord-py-interactions
+structlog
+python-dotenv
+requests
+textdistance
+arrow
+geopy
+progressbar

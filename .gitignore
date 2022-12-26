@@ -1,0 +1,5 @@
+.env
+data/topology
+extensions/__pycache__
+reseaux/__pycache__
+shared/__pycache__

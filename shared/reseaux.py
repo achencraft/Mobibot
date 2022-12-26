@@ -8,7 +8,7 @@ from reseaux.cts import Cts
 
 class Reseaux():
 
-    Compagnies = ['CTS','LUXTRAM','TCL']
+    Compagnies = ['CTS'] #LUXTRAM, TCL
 
 
     #Lancé depuis le Bot

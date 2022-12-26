@@ -113,12 +113,13 @@ class Horaires(interactions.Extension):
             embeds = await self.GetAttente(compagnie, station)
 
             titre = stop.nom
+            now = arrow.utcnow().to('Europe/Paris').format('DD/MM/YY HH:mm')
             if len(embeds) == 0 :
                 embed = interactions.Embed(title=titre,description="Aucun passage pour la station "+stop.nom)
                 embed.set_footer(text=compagnie+"_"+station)
                 await ctx.send(embeds=embed,components=self.button,ephemeral=True)
             else:
-                embeds[-1].set_footer(text=compagnie+"_"+station)
+                embeds[-1].set_footer(text=compagnie+"_"+station+"\nmis à jour le "+now)
                 embeds[0].title = titre+"\n"+embeds[0].title
 
             if public:
@@ -158,7 +159,7 @@ class Horaires(interactions.Extension):
 
                     if not p.heure == "":
                         temps = arrow.get(p.heure)
-                        utcnow = utc = arrow.utcnow()
+                        utc = arrow.utcnow()
                         now = utc.to('Europe/Paris')
                         diff = temps - now
                         if(diff.seconds > 0):
@@ -198,20 +199,21 @@ class Horaires(interactions.Extension):
         data = ctx.message.embeds[-1]
         footer = data.footer.text
         compagnie = footer.split('_')[0]
-        station =  footer.split('_')[1]
+        station =  footer.split('_')[1].split('\n')[0]
 
         embeds = []
         stop = list(filter(lambda x: x.logicalStopCode == station,Reseaux.Get_Stations_From_Compagnie(compagnie,"")))[0]
         titre = stop.nom
 
         embeds = await self.GetAttente(compagnie, station)
+        now = arrow.utcnow().to('Europe/Paris').format('DD/MM/YY HH:mm')
 
         if len(embeds) == 0 :
             embed = interactions.Embed(title=titre,description="Aucun passage pour la station "+stop.nom)
-            embed.set_footer(text=compagnie+"_"+station)
+            embed.set_footer(text=compagnie+"_"+station+"\nmis à jour le "+now)
             await ctx.send(embeds=embed,components=self.button,ephemeral=True)
         else:
-            embeds[-1].set_footer(text=compagnie+"_"+station)
+            embeds[-1].set_footer(text=compagnie+"_"+station+"\nmis à jour le "+now)
             embeds[0].title = titre+"\n"+embeds[0].title
 
 

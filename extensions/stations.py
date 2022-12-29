@@ -3,7 +3,7 @@
 #                               Fonction stations                                     #
 #                                                                                     #
 #######################################################################################
-import interactions
+import interactions, copy
 from shared.config import Config
 from shared.reseaux import Reseaux
 
@@ -144,10 +144,11 @@ class Stations(interactions.Extension):
 
             embed.set_footer(text=footer)
 
-            boutons = self.buttons
+            boutons = copy.deepcopy(self.buttons)
             if nbr_page == 1:
                 boutons = []
             else:
+                boutons[0].disabled = True
                 boutons[1].disabled = True
 
             if public:
@@ -167,6 +168,7 @@ class Stations(interactions.Extension):
     async def change_page(self, ctx, mode):
 
         data = ctx.message.embeds[0]
+        boutons = copy.deepcopy(self.buttons)
         footer = data.footer.text
         compagnie = footer.split(':')[0].split('_')[1]
         ville = footer.split(':')[0].split('_')[2]
@@ -195,14 +197,20 @@ class Stations(interactions.Extension):
                 nouvelle_page = nbr_page
 
         if nouvelle_page == 1:
-            self.buttons[1].disabled = True
-            self.buttons[2].disabled = False
+            boutons[0].disabled = True
+            boutons[1].disabled = True
+            boutons[2].disabled = False
+            boutons[3].disabled = False
         elif nouvelle_page == nbr_page:
-            self.buttons[2].disabled = True
-            self.buttons[1].disabled = False
+            boutons[0].disabled = False
+            boutons[1].disabled = False
+            boutons[2].disabled = True
+            boutons[3].disabled = True
         else:
-            self.buttons[1].disabled = False
-            self.buttons[2].disabled = False
+            boutons[0].disabled = False
+            boutons[1].disabled = False
+            boutons[2].disabled = False
+            boutons[3].disabled = False
 
 
         debut = (nouvelle_page - 1)*nbr_stop_per_page
@@ -228,7 +236,7 @@ class Stations(interactions.Extension):
         footer = footer + f':{nouvelle_page}'
 
         embed.set_footer(text=footer)
-        await ctx.edit(embeds=embed, components=self.buttons)
+        await ctx.edit(embeds=embed, components=boutons)
              
 
 #######################################################################################
@@ -236,45 +244,21 @@ class Stations(interactions.Extension):
 #######################################################################################
 
 
-    @interactions.extension_component(
-        interactions.Button(
-            style=interactions.ButtonStyle.PRIMARY,
-            label="",
-            custom_id="Stop_First_Page",
-        )
-    )
+    @interactions.extension_component("Stop_First_Page")
     async def FirstPageButton(self,ctx: interactions.ComponentContext):
         await self.change_page(ctx, "First")
         
     
-    @interactions.extension_component(
-        interactions.Button(
-            style=interactions.ButtonStyle.PRIMARY,
-            label="",
-            custom_id="Stop_Prev_Page",
-        )
-    )
-    async def PrevPageButton(self,ctx):
+    @interactions.extension_component("Stop_Prev_Page")
+    async def PrevPageButton(self,ctx: interactions.ComponentContext):
         await self.change_page(ctx, "Prev")
 
-    @interactions.extension_component(
-        interactions.Button(
-            style=interactions.ButtonStyle.PRIMARY,
-            label="",
-            custom_id="Stop_Next_Page",
-        )
-    )
-    async def NextPageButton(self,ctx):
+    @interactions.extension_component("Stop_Next_Page")
+    async def NextPageButton(self,ctx: interactions.ComponentContext):
         await self.change_page(ctx, "Next")
 
-    @interactions.extension_component(
-        interactions.Button(
-            style=interactions.ButtonStyle.PRIMARY,
-            label="",
-            custom_id="Stop_Last_Page",
-        )
-    )
-    async def LastPageButton(self,ctx):
+    @interactions.extension_component("Stop_Last_Page")
+    async def LastPageButton(self,ctx: interactions.ComponentContext):
         await self.change_page(ctx, "Last")
 
 

@@ -3,7 +3,7 @@
 #                               Fonction horaires                                     #
 #                                                                                     #
 #######################################################################################
-import interactions
+import interactions, copy
 import itertools, arrow, re
 from shared.reseaux import Reseaux
 from shared.ligne import Ligne
@@ -98,6 +98,7 @@ class Horaires(interactions.Extension):
     async def Horaires(self, ctx: interactions.CommandContext, compagnie: str, station: str, mode: str = "Live", public: bool = False):
 
         embeds = []
+        bouton = copy.deepcopy(self.button)
 
         pattern = re.compile(r"[0-9]+[a-zA-Z]", re.IGNORECASE)
         if station.isnumeric():
@@ -117,15 +118,15 @@ class Horaires(interactions.Extension):
             if len(embeds) == 0 :
                 embed = interactions.Embed(title=titre,description="Aucun passage pour la station "+stop.nom)
                 embed.set_footer(text=compagnie+"_"+station)
-                await ctx.send(embeds=embed,components=self.button,ephemeral=True)
+                await ctx.send(embeds=embed,components=bouton,ephemeral=True)
             else:
                 embeds[-1].set_footer(text=compagnie+"_"+station+"\nmis à jour le "+now)
                 embeds[0].title = titre+"\n"+embeds[0].title
 
             if public:
-                await ctx.send(embeds=embeds, components=self.button)
+                await ctx.send(embeds=embeds, components=bouton)
             else:
-                await ctx.send(embeds=embeds, components=self.button, ephemeral=True)
+                await ctx.send(embeds=embeds, components=bouton, ephemeral=True)
         else:
             #Reseaux.get_Passages_PDF(compagnie,station)
             await ctx.send("Option à venir",ephemeral=True)
@@ -197,6 +198,7 @@ class Horaires(interactions.Extension):
     async def Actualiser(self, ctx):
         
         data = ctx.message.embeds[-1]
+        bouton = copy.deepcopy(self.button)
         footer = data.footer.text
         compagnie = footer.split('_')[0]
         station =  footer.split('_')[1].split('\n')[0]
@@ -211,14 +213,14 @@ class Horaires(interactions.Extension):
         if len(embeds) == 0 :
             embed = interactions.Embed(title=titre,description="Aucun passage pour la station "+stop.nom)
             embed.set_footer(text=compagnie+"_"+station+"\nmis à jour le "+now)
-            await ctx.send(embeds=embed,components=self.button,ephemeral=True)
+            await ctx.send(embeds=embed,components=bouton,ephemeral=True)
         else:
             embeds[-1].set_footer(text=compagnie+"_"+station+"\nmis à jour le "+now)
             embeds[0].title = titre+"\n"+embeds[0].title
 
 
         
-        await ctx.edit(embeds=embeds, components=self.button)
+        await ctx.edit(embeds=embeds, components=bouton)
 
 
 #######################################################################################
@@ -226,13 +228,7 @@ class Horaires(interactions.Extension):
 #######################################################################################
 
 
-    @interactions.extension_component(
-        interactions.Button(
-            style=interactions.ButtonStyle.PRIMARY,
-            label="",
-            custom_id="Reload",
-        )
-    )
+    @interactions.extension_component("Reload")
     async def reload(self,ctx: interactions.ComponentContext):
         await self.Actualiser(ctx)
 

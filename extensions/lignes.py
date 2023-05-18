@@ -50,41 +50,23 @@ class Lignes(interactions.Extension):
 #######################################################################################
 
 
-    @interactions.extension_autocomplete(command="lignes", name="compagnie")
-    async def autocomplete_compagnie(self, ctx, user_input: str = ""):
-        liste_compagnie = Reseaux.Get_Compagnies()
-        liste_choix = []
-
-        if user_input == "":
-            for compagnie in liste_compagnie:
-                liste_choix.append(interactions.Choice(name=compagnie, value=compagnie))
-        else:
-            for compagnie in liste_compagnie:                
-                if user_input in compagnie.lower():
-                    liste_choix.append(interactions.Choice(name=compagnie, value=compagnie))
-        await ctx.populate(liste_choix[:20])
-
-
-    @interactions.extension_command(
+    @interactions.slash_command(
         name="lignes",
-        description="Obtenir la liste des lignes d'une compagnie",
-        options=[
-            interactions.Option(
-                name="compagnie",
-                description="Compagnie de transport",
-                type=interactions.OptionType.STRING,
-                required=True,
-                autocomplete=True
-            ),
-            interactions.Option(
-                name="public",
-                description="Réponse visible de tous",
-                type=interactions.OptionType.BOOLEAN,
-                required=False
-            )
-        ],
+        description="Obtenir la liste des lignes d'une compagnie")    
+    @interactions.slash_option(
+        name="compagnie",
+        description="Compagnie de transport",
+        opt_type=interactions.OptionType.STRING,
+        required=True,
+        autocomplete=True
     )
-    async def Lignes(self, ctx: interactions.CommandContext, compagnie: str, public: bool = False ):
+    @interactions.slash_option(
+        name="public",
+        description="Réponse visible de tous",
+        opt_type=interactions.OptionType.BOOLEAN,
+        required=False
+    )
+    async def Lignes(self, ctx: interactions.SlashContext, compagnie: str, public: bool = False ):
 
         lignesList = []
         reseau = ""
@@ -133,6 +115,24 @@ class Lignes(interactions.Extension):
         else:
             text = "Aucune ligne pour "+reseau+"\nContactez le support du bot"
             await ctx.send(content=text, ephemeral=True)
+
+
+
+
+
+    @Lignes.autocomplete("compagnie")
+    async def autocomplete_compagnie(self, ctx: interactions.AutocompleteContext):
+        liste_compagnie = Reseaux.Get_Compagnies()
+        liste_choix = []
+
+        if ctx.input_text == "":
+            for compagnie in liste_compagnie:
+                liste_choix.append(interactions.SlashCommandChoice(name=compagnie, value=compagnie))
+        else:
+            for compagnie in liste_compagnie:                
+                if ctx.input_text in compagnie.lower():
+                    liste_choix.append(interactions.SlashCommandChoice(name=compagnie, value=compagnie))
+        await ctx.send(liste_choix[:20])
 
 
 #######################################################################################
@@ -205,7 +205,7 @@ class Lignes(interactions.Extension):
         footer = footer + f':{nouvelle_page}'
 
         embed.set_footer(text=footer)
-        await ctx.edit(embeds=embed, components=boutons)
+        await ctx.edit_origin(embeds=embed, components=boutons)
              
 
 #######################################################################################
@@ -213,19 +213,19 @@ class Lignes(interactions.Extension):
 #######################################################################################
 
 
-    @interactions.extension_component("Ligne_First_Page")
+    @interactions.component_callback("Ligne_First_Page")
     async def FirstPageButton(self,ctx: interactions.ComponentContext):
         await self.change_page(ctx, "First")
         
-    @interactions.extension_component("Ligne_Prev_Page")
+    @interactions.component_callback("Ligne_Prev_Page")
     async def PrevPageButton(self,ctx: interactions.ComponentContext):
         await self.change_page(ctx, "Prev")
 
-    @interactions.extension_component("Ligne_Next_Page")
+    @interactions.component_callback("Ligne_Next_Page")
     async def NextPageButton(self,ctx: interactions.ComponentContext):
         await self.change_page(ctx, "Next")
 
-    @interactions.extension_component("Ligne_Last_Page")
+    @interactions.component_callback("Ligne_Last_Page")
     async def LastPageButton(self,ctx: interactions.ComponentContext):
         await self.change_page(ctx, "Last")
 

@@ -22,80 +22,41 @@ class Horaires(interactions.Extension):
 
 
 
-    @interactions.extension_autocomplete(command="horaires", name="compagnie")
-    async def autocomplete_compagnie(self, ctx, user_input: str = ""):
-        liste_compagnie = Reseaux.Get_Compagnies()
-        liste_choix = []
 
-        if user_input == "":
-            for compagnie in liste_compagnie:
-                liste_choix.append(interactions.Choice(name=compagnie, value=compagnie))
-        else:
-            for compagnie in liste_compagnie:                
-                if user_input in compagnie.lower():
-                    liste_choix.append(interactions.Choice(name=compagnie, value=compagnie))
-        await ctx.populate(liste_choix[:20])
-
-    @interactions.extension_autocomplete(command="horaires", name="station")
-    async def autocomplete_station(self, ctx, user_input: str = ""):
-
-        options = ctx.data.options
-        for option in options:
-            if option.name == "compagnie":
-                compagnie = option.value
-
-        liste_stations = Reseaux.Get_Stations_From_Compagnie(compagnie,"")
-
-        liste_choix = []
-
-        if user_input == "":
-            for station in liste_stations:
-                liste_choix.append(interactions.Choice(name=station.nom, value=station.logicalStopCode))
-        else:
-            for station in liste_stations:                
-                if user_input in station.nom.lower():
-                    liste_choix.append(interactions.Choice(name=station.nom, value=station.logicalStopCode))
-
-        
-        await ctx.populate(liste_choix[:20])
-
-    @interactions.extension_command(
+    @interactions.slash_command(
         name="horaires",
-        description="Obtenir le prochain passage en station",
-        options=[
-            interactions.Option(
-                name="compagnie",
-                description="Compagnie de transport",
-                type=interactions.OptionType.STRING,
-                required=True,
-                autocomplete=True
-            ),
-            interactions.Option(
-                name="station",
-                description="Station",
-                type=interactions.OptionType.STRING,
-                required=True,
-                autocomplete=True
-            ),
-            interactions.Option(
-                name="mode",
-                description="Théorique ou Temps Réel",
-                type=interactions.OptionType.STRING,
-                choices=[
-                    interactions.Choice(name="Live", value="Live"),
-                    interactions.Choice(name="Théorique", value="PDF")
-                    ], #Live par défaut
-                required=False,
-            ),
-            interactions.Option(
-                name="public",
-                description="Réponse visible de tous",
-                type=interactions.OptionType.BOOLEAN,
-                required=False
-            )
-        ],
+        description="Obtenir le prochain passage en station")
+    @interactions.slash_option(
+        name="compagnie",
+        description="Compagnie de transport",
+        opt_type=interactions.OptionType.STRING,
+        required=True,
+        autocomplete=True
     )
-    async def Horaires(self, ctx: interactions.CommandContext, compagnie: str, station: str, mode: str = "Live", public: bool = False):
+    @interactions.slash_option(
+        name="station",
+        description="Station",
+        opt_type=interactions.OptionType.STRING,
+        required=True,
+        autocomplete=True
+    )
+    @interactions.slash_option(
+        name="mode",
+        description="Théorique ou Temps Réel",
+        opt_type=interactions.OptionType.STRING,
+        choices=[
+            interactions.SlashCommandChoice(name="Live", value="Live"),
+            interactions.SlashCommandChoice(name="Théorique", value="PDF")
+            ], #Live par défaut
+        required=False,
+    )
+    @interactions.slash_option(
+        name="public",
+        description="Réponse visible de tous",
+        opt_type=interactions.OptionType.BOOLEAN,
+        required=False
+    )
+    async def Horaires(self, ctx: interactions.SlashContext, compagnie: str, station: str, mode: str = "Live", public: bool = False):
 
         embeds = []
         bouton = copy.deepcopy(self.button)
@@ -130,6 +91,43 @@ class Horaires(interactions.Extension):
         else:
             #Reseaux.get_Passages_PDF(compagnie,station)
             await ctx.send("Option à venir",ephemeral=True)
+
+
+
+
+    @Horaires.autocomplete("compagnie")
+    async def autocomplete_compagnie(self, ctx: interactions.AutocompleteContext):
+        liste_compagnie = Reseaux.Get_Compagnies()
+        liste_choix = []
+
+        if ctx.input_text == "":
+            for compagnie in liste_compagnie:
+                liste_choix.append(interactions.SlashCommandChoice(name=compagnie, value=compagnie))
+        else:
+            for compagnie in liste_compagnie:                
+                if ctx.input_text in compagnie.lower():
+                    liste_choix.append(interactions.SlashCommandChoice(name=compagnie, value=compagnie))
+        await ctx.send(liste_choix[:20])
+
+    @Horaires.autocomplete("station")
+    async def autocomplete_station(self, ctx: interactions.AutocompleteContext):
+
+        compagnie = ctx.kwargs['compagnie']
+
+        liste_stations = Reseaux.Get_Stations_From_Compagnie(compagnie,"")
+
+        liste_choix = []
+
+        if ctx.input_text == "":
+            for station in liste_stations:
+                liste_choix.append(interactions.SlashCommandChoice(name=station.nom, value=station.logicalStopCode))
+        else:
+            for station in liste_stations:                
+                if ctx.input_text in station.nom.lower():
+                    liste_choix.append(interactions.SlashCommandChoice(name=station.nom, value=station.logicalStopCode))
+
+        
+        await ctx.send(liste_choix[:20])
 
 #######################################################################################
 #                      Fonction de récupération des temps                             #
@@ -220,7 +218,7 @@ class Horaires(interactions.Extension):
 
 
         
-        await ctx.edit(embeds=embeds, components=bouton)
+        await ctx.edit_origin(embeds=embeds, components=bouton)
 
 
 #######################################################################################
@@ -228,7 +226,7 @@ class Horaires(interactions.Extension):
 #######################################################################################
 
 
-    @interactions.extension_component("Reload")
+    @interactions.component_callback("Reload")
     async def reload(self,ctx: interactions.ComponentContext):
         await self.Actualiser(ctx)
 

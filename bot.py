@@ -22,25 +22,20 @@ EXTENSIONS = [
     'extensions.lignes'
     ]
 
-async def set_activity():
-    activity = interactions.PresenceActivity(name="Guess The Station",type=0)
-    await bot.change_presence(interactions.ClientPresence(activities=[activity]))
-
 
 #######################################################################################
 #                               Initialisations                                       #
 #######################################################################################
 Reseaux.Charger_reseaux(config)
 Config.Creer_config(config)
-bot = interactions.Client(token=TOKEN)
-asyncio.run(set_activity())
+bot = interactions.Client(token=TOKEN, activity="Guess The Station")
 
 
 #######################################################################################
 #                          chargement des extensions                                  #
 #######################################################################################
 for ext in EXTENSIONS:
-    bot.load(ext)
+    bot.load_extension(ext)
 
 
 #######################################################################################

@@ -50,68 +50,32 @@ class Stations(interactions.Extension):
 #                               Commande station                                      #
 #######################################################################################
 
-    @interactions.extension_autocomplete(command="stations", name="ville")
-    async def autocomplete_ville(self, ctx, user_input: str = ""):
+    
 
-        options = ctx.data.options
-        for option in options:
-            if option.name == "compagnie":
-                compagnie = option.value
-
-        liste_ville = Reseaux.Get_Cities_From_Compagnie(compagnie)
-        liste_choix = []
-
-        if user_input == "":
-            for ville in liste_ville:
-                liste_choix.append(interactions.Choice(name=ville, value=ville))
-        else:
-            for ville in liste_ville:                
-                if user_input in ville.lower():
-                    liste_choix.append(interactions.Choice(name=ville, value=ville))
-        await ctx.populate(liste_choix[:20])
-
-    @interactions.extension_autocomplete(command="stations", name="compagnie")
-    async def autocomplete_compagnie(self, ctx, user_input: str = ""):
-        liste_compagnie = Reseaux.Get_Compagnies()
-        liste_choix = []
-
-        if user_input == "":
-            for compagnie in liste_compagnie:
-                liste_choix.append(interactions.Choice(name=compagnie, value=compagnie))
-        else:
-            for compagnie in liste_compagnie:                
-                if user_input in compagnie.lower():
-                    liste_choix.append(interactions.Choice(name=compagnie, value=compagnie))
-        await ctx.populate(liste_choix[:20])
-
-
-    @interactions.extension_command(
+    @interactions.slash_command(
         name="stations",
-        description="Obtenir la liste des stations d'une compagnie",
-        options=[
-            interactions.Option(
-                name="compagnie",
-                description="Compagnie de transport",
-                type=interactions.OptionType.STRING,
-                required=True,
-                autocomplete=True
-            ),
-            interactions.Option(
-                name="ville",
-                description="Ville",
-                type=interactions.OptionType.STRING,
-                required=False,
-                autocomplete=True
-            ),
-            interactions.Option(
-                name="public",
-                description="Réponse visible de tous",
-                type=interactions.OptionType.BOOLEAN,
-                required=False
-            )
-        ],
+        description="Obtenir la liste des stations d'une compagnie")
+    @interactions.slash_option(
+        name="compagnie",
+        description="Compagnie de transport",
+        opt_type=interactions.OptionType.STRING,
+        required=True,
+        autocomplete=True
     )
-    async def Stations(self, ctx: interactions.CommandContext, compagnie: str, ligne: str = "", ville: str = "", public: bool = False ):
+    @interactions.slash_option(
+        name="ville",
+        description="Ville",
+        opt_type=interactions.OptionType.STRING,
+        required=False,
+        autocomplete=True
+    )
+    @interactions.slash_option(
+        name="public",
+        description="Réponse visible de tous",
+        opt_type=interactions.OptionType.BOOLEAN,
+        required=False
+    )
+    async def Stations(self, ctx: interactions.SlashContext, compagnie: str, ligne: str = "", ville: str = "", public: bool = False ):
 
         stopList = []
         reseau = ""
@@ -159,6 +123,38 @@ class Stations(interactions.Extension):
         else:
             text = "Aucune station pour "+reseau+" "+ville+"\nContactez le support du bot"
             await ctx.send(content=text, ephemeral=True)
+
+
+    @Stations.autocomplete("ville")
+    async def autocomplete_ville(self, ctx: interactions.AutocompleteContext):
+
+        compagnie = ctx.kwargs['compagnie']
+
+        liste_ville = Reseaux.Get_Cities_From_Compagnie(compagnie)
+        liste_choix = []
+
+        if ctx.input_text == "":
+            for ville in liste_ville:
+                liste_choix.append(interactions.SlashCommandChoice(name=ville, value=ville))
+        else:
+            for ville in liste_ville:                
+                if ctx.input_text in ville.lower():
+                    liste_choix.append(interactions.SlashCommandChoice(name=ville, value=ville))
+        await ctx.send(liste_choix[:20])
+
+    @Stations.autocomplete("compagnie")
+    async def autocomplete_compagnie(self, ctx: interactions.AutocompleteContext):
+        liste_compagnie = Reseaux.Get_Compagnies()
+        liste_choix = []
+
+        if ctx.input_text == "":
+            for compagnie in liste_compagnie:
+                liste_choix.append(interactions.SlashCommandChoice(name=compagnie, value=compagnie))
+        else:
+            for compagnie in liste_compagnie:                
+                if ctx.input_text in compagnie.lower():
+                    liste_choix.append(interactions.SlashCommandChoice(name=compagnie, value=compagnie))
+        await ctx.send(liste_choix[:20])
 
 
 #######################################################################################
@@ -236,7 +232,7 @@ class Stations(interactions.Extension):
         footer = footer + f':{nouvelle_page}'
 
         embed.set_footer(text=footer)
-        await ctx.edit(embeds=embed, components=boutons)
+        await ctx.edit_origin(embeds=embed, components=boutons)
              
 
 #######################################################################################
@@ -244,20 +240,20 @@ class Stations(interactions.Extension):
 #######################################################################################
 
 
-    @interactions.extension_component("Stop_First_Page")
+    @interactions.component_callback("Stop_First_Page")
     async def FirstPageButton(self,ctx: interactions.ComponentContext):
         await self.change_page(ctx, "First")
         
     
-    @interactions.extension_component("Stop_Prev_Page")
+    @interactions.component_callback("Stop_Prev_Page")
     async def PrevPageButton(self,ctx: interactions.ComponentContext):
         await self.change_page(ctx, "Prev")
 
-    @interactions.extension_component("Stop_Next_Page")
+    @interactions.component_callback("Stop_Next_Page")
     async def NextPageButton(self,ctx: interactions.ComponentContext):
         await self.change_page(ctx, "Next")
 
-    @interactions.extension_component("Stop_Last_Page")
+    @interactions.component_callback("Stop_Last_Page")
     async def LastPageButton(self,ctx: interactions.ComponentContext):
         await self.change_page(ctx, "Last")
 
